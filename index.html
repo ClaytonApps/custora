@@ -687,7 +687,7 @@ body{
           <div style="margin-bottom:14px;"><div style="font-size:13px;font-weight:600;color:var(--navy)" id="cfg-storage-info">Calculando…</div><div style="font-size:11px;color:var(--g400);margin-top:2px;">Dados salvos localmente neste dispositivo.</div></div>
           <div class="btn-row" style="margin-top:0;flex-wrap:wrap;">
             <button class="btn btn-ghost btn-sm btn-full-mobile" onclick="exportarCSV()">Exportar backup CSV</button>
-            <button class="btn btn-danger btn-sm btn-full-mobile" onclick="limparTodosDados()">Limpar todos os dados</button>
+            <button class="btn btn-danger btn-sm btn-full-mobile" disabled title="Função desabilitada temporariamente" style="opacity:.5;cursor:not-allowed;">Limpar todos os dados (desativado)</button>
           </div>
         </div>
         <div class="btn-row">
@@ -978,7 +978,15 @@ function gerarPDF(id){
   function section(title){doc.setFillColor(242,101,34);doc.rect(m,y,3,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(13,27,42);doc.text(title,m+6,y+5);y+=12;doc.setDrawColor(230,230,230);doc.setLineWidth(.3);doc.line(m,y,W-m,y);y+=6;}
   function row(label,val){if(!val)return;doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(120,120,130);doc.text(label.toUpperCase(),m,y);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(13,27,42);const lines=doc.splitTextToSize(val,W-m-65);doc.text(lines,m+55,y);y+=Math.max(6,lines.length*5)+1;}
   function ensureSpace(needed){if(y+needed>275){doc.addPage();y=20;}}
-  function addPhoto(label,dataUrl){if(!dataUrl)return;ensureSpace(70);y+=4;doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(120,120,130);doc.text(label,m,y);y+=3;try{doc.addImage(dataUrl,'JPEG',m,y,80,60);}catch(e){}doc.setDrawColor(200,200,200);doc.rect(m,y,80,60);y+=64;}
+  function addPhoto(label,dataUrl){
+    if(!dataUrl)return;
+    const maxW=85,maxH=64;let w=maxW,h=maxH;
+    try{const p=doc.getImageProperties(dataUrl);const ratio=p.width/p.height;w=maxW;h=maxW/ratio;if(h>maxH){h=maxH;w=maxH*ratio;}}catch(e){}
+    ensureSpace(h+12);
+    y+=4;doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(120,120,130);doc.text(label,m,y);y+=3;
+    try{doc.addImage(dataUrl,'JPEG',m,y,w,h,undefined,'FAST');}catch(e){try{doc.addImage(dataUrl,'PNG',m,y,w,h);}catch(e2){}}
+    doc.setDrawColor(200,200,200);doc.rect(m,y,w,h);y+=h+4;
+  }
   section('PARTE A — COLETA');row('Remetente',r.coletaNome);row('Telefone',r.coletaTel);if(r.coletaDoc)row('Documento',r.coletaDoc);row('Item',r.coletaItem);row('Estado do Item',r.coletaEstado);row('Data da Coleta',formatDate(new Date(r.criadoEm)));if(r.coletaObs)row('Observações',r.coletaObs);
   addPhoto('FOTO DO ITEM (COLETA)',r.coletaFoto);
   if(r.coletaSig){ensureSpace(30);y+=4;doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(120,120,130);doc.text('ASSINATURA DO REMETENTE',m,y);y+=3;try{doc.addImage(r.coletaSig,'PNG',m,y,70,22);}catch(e){}doc.setDrawColor(200,200,200);doc.rect(m,y,70,22);y+=26;}
